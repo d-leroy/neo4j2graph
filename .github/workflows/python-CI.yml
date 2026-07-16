@@ -24,12 +24,9 @@ jobs:
           --health-interval 2s
           --health-timeout 5s
           --health-retries 10
-        volumes:
-          - ./data:/data:Z
-          - ./plugins:/plugins:Z
         ports:                    
-        - 7474:7474 # used for http
-        - 7687:7687 # used for bolt
+          - 7474:7474 # used for http
+          - 7687:7687 # used for bolt
         env:       
           NEO4J_AUTH: ${{ env.NEO4J_USER }}/${{ env.NEO4J_PASSWORD }} 
           NEO4J_apoc_export_file_enabled: "true"
@@ -38,24 +35,24 @@ jobs:
           NEO4J_PLUGINS: '["apoc", "apoc-extended"]'
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v6
-      
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.14'
-        cache: 'pip'
-
-    - name: Install Dependencies
-      run: pip install -r requirements.txt
-
-    - name: test jsonToTCM
-      run: python3.14 arcane2graph/jsonToTCM.py test
-
-    - name: test TCMtoTSM
-      run: python3.14 arcane2graph/TCMtoTSM.py test
-
-    - name: test TSMtoDB
-      run: |
-        python3.14 arcane2graph/TSMtoNeo4j.py test bolt://localhost:7687 ${{ env.NEO4J_USER }} ${{ env.NEO4J_PASSWORD }}
+      - name: Checkout code
+        uses: actions/checkout@v6
+        
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+          cache: 'pip'
+          
+      - name: Install Dependencies
+        run: pip install -r requirements.txt
+        
+      - name: test jsonToTCM
+        run: python3.14 arcane2graph/jsonToTCM.py test
+        
+      - name: test TCMtoTSM
+        run: python3.14 arcane2graph/TCMtoTSM.py test
+        
+      - name: test TSMtoDB
+        run: |
+          python3.14 arcane2graph/TSMtoNeo4j.py test bolt://localhost:7687 ${{ env.NEO4J_USER }} ${{ env.NEO4J_PASSWORD }}
