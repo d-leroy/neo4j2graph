@@ -1,0 +1,58 @@
+name: Test Neo4j Python Connectivity
+
+on:
+  workflow_dispatch:
+  pull_request: 
+  push:
+    branches: [ main ]
+
+jobs:
+  test-neo4j:
+    runs-on: ubuntu-latest
+    services:
+      neo4j:
+        image: neo4j:latest
+        ports:
+          - 7474:7474  # HTTP
+          - 7687:7687  # Bolt
+        env:
+          NEO4J_USER: neo4j
+          NEO4J_PASSWORD: password
+          NEO4J_apoc_export_file_enabled: "true"
+          NEO4J_apoc_import_file_enabled: "true"
+          NEO4JLABS_PLUGINS: '["apoc"]'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install neo4j Python driver
+        run: pip install neo4j
+
+      - name: Test Neo4j connectivity
+        run: |
+          python -c "
+          from neo4j import GraphDatabase
+          import os
+
+          # Connect to Neo4j service
+          uri = 'bolt://localhost:7687'
+          auth = ('${{ env.NEO4J_USER }}', '${{ env.NEO4J_PASSWORD }}')
+          driver = GraphDatabase.driver(uri, auth=auth, encrypted=False)
+
+          # Verify connectivity
+          driver.verify_connectivity()
+          print('Successfully connected to Neo4j!')
+
+          # Run a simple query
+          with driver.session() as session:
+            result = session.run('RETURN 1 AS test')
+            print('Query executed:', result.single()['test'])
+
+          driver.close()
+          "
