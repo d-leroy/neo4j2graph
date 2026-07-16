@@ -41,8 +41,8 @@ jobs:
           import os
 
           # Connect to Neo4j service
-          uri = 'bolt://neo4j:7687'
-          auth = ('${{ env.NEO4J_USER }}', '${{ env.NEO4J_PASSWORD }}')
+          uri = 'bolt://localhost:7687'
+          auth = ('neo4j', 'password')
           driver = GraphDatabase.driver(uri, auth=auth, encrypted=False)
 
           # Verify connectivity
