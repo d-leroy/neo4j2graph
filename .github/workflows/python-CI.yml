@@ -1,6 +1,10 @@
 name: Python CI
 
-on: [push]
+on:
+  workflow_dispatch:
+  pull_request: 
+  push:
+    branches: [ main ]
 
 env:  
   NEO4J_USER: neo4j
@@ -14,8 +18,12 @@ jobs:
     services:
       neo4j:
         image: neo4j:latest
-        options: > 
+        options: >- 
           --name test
+          --health-cmd "cypher-shell -u neo4j -p password 'RETURN 1;' || exit 1"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 10
         volumes:
           - ./data:/data:Z
           - ./plugins:/plugins:Z
@@ -27,27 +35,27 @@ jobs:
           NEO4J_apoc_export_file_enabled: "true"
           NEO4J_apoc_import_file_enabled: "true"
           NEO4J_apoc_import_file_use__neo4j__config: "true"
-          NEO4JLABS_PLUGINS: '["apoc", "apoc-extended"]'
+          NEO4J_PLUGINS: '["apoc", "apoc-extended"]'
 
     steps:
-    - uses: actions/checkout@v6
-    - uses: actions/setup-python@v5
+    - name: Checkout code
+      uses: actions/checkout@v6
+      
+    - name: Set up Python
+      uses: actions/setup-python@v5
       with:
         python-version: '3.14'
         cache: 'pip'
+
     - name: Install Dependencies
       run: pip install -r requirements.txt
-    - name: start db
-      run: docker start ${{env.NEO4J_CONTAINER_NAME}}
-        
 
     - name: test jsonToTCM
       run: python3.14 arcane2graph/jsonToTCM.py test
+
     - name: test TCMtoTSM
       run: python3.14 arcane2graph/TCMtoTSM.py test
+
     - name: test TSMtoDB
       run: |
-        docker ps
-        docker ps -a
-        python3.14 arcane2graph/TSMtoNeo4j.py test bolt+ssc://localhost:7687 ${{ env.NEO4J_USER }} ${{ env.NEO4J_PASSWORD }}
-    
+        python3.14 arcane2graph/TSMtoNeo4j.py test bolt://localhost:7687 ${{ env.NEO4J_USER }} ${{ env.NEO4J_PASSWORD }}
