@@ -21,6 +21,11 @@ jobs:
           NEO4J_apoc_export_file_enabled: "true"
           NEO4J_apoc_import_file_enabled: "true"
           NEO4JLABS_PLUGINS: '["apoc"]'
+        options: >-
+          --health-cmd "cypher-shell -u neo4j -p password 'RETURN 1;' || exit 1"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 10
 
     steps:
       - name: Checkout code
@@ -41,7 +46,7 @@ jobs:
           import os
 
           # Connect to Neo4j service
-          uri = 'bolt://localhost:7687'
+          uri = 'bolt://neo4j:7687'
           auth = ('neo4j', 'password')
           driver = GraphDatabase.driver(uri, auth=auth, encrypted=False)
 
