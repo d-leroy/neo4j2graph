@@ -305,7 +305,7 @@ def run_export_axl(input_dir="./axl_json", neo4j_uri="bolt://localhost:7687", ne
     print("AXL export imported and relationships created.")
 
 def main():
-    """Main entry point for the arcane2graph CLI."""
+    """Main entry point for the panoramix CLI."""
     parser = argparse.ArgumentParser(description="Convert XML to JSON and merge data into Neo4j")
     parser.add_argument("--xml-path", default="./xml", help="Path to XML input directory")
     parser.add_argument("--json-path", default="./arc_json", help="Path to JSON directory (output for conversion, input for merge)")

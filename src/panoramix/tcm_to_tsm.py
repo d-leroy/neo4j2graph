@@ -1,6 +1,6 @@
 import os
 import sys
-from jsonToTCM import TCM, Edge, TYPES, NODE_COMPOSITE_TYPES
+from panoramix.json_to_tcm import TCM, Edge, TYPES, NODE_COMPOSITE_TYPES
 
 class SNode:
     def __init__(self, name, stype):
@@ -264,5 +264,5 @@ if __name__ == "__main__":
     args = sys.argv
     if len(args) == 1: main()
     elif args[1] == 'test':
-        import test_.test_TCMtoTSM as test
+        import tests.test_tcm_to_tsm as test
         test.validate_tsm()

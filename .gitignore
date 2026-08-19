@@ -10,7 +10,7 @@ __pycache__/
 *.pyo
 *.pyd
 .Python
-arcane2graph/__pycache__/
+src/panoramix/__pycache__/
 
 # Distribution / packaging
 build/

@@ -1,6 +1,6 @@
-from jsonToTCM import TCM, TYPES, Node, Edge
-from TSMtoNeo4j import sanitize, TSM_creation_query, STARTING_CHAR
-from TCMtoTSM import TSM
+from panoramix.json_to_tcm import TCM, TYPES, Node, Edge
+from panoramix.tsm_to_neo4j import sanitize, TSM_creation_query, STARTING_CHAR
+from panoramix.tcm_to_tsm import TSM
 from neo4j import GraphDatabase
 import os, sys
 from functools import reduce
@@ -255,7 +255,7 @@ FOREACH(n IN value_nodes | SET n.value = {cast_method})"""
                 if e in TCMtoDB.final_queries["node_matching"]:
                     identifiers[i] = TCMtoDB.final_queries["node_matching"][e]
                 else:
-                    identifiers[i] = TCMtoDB.final_queries["node_matching"][e] = f"e{len(TCMtoDB.final_queries["node_matching"])}"
+                    identifiers[i] = TCMtoDB.final_queries["node_matching"][e] = f'e{len(TCMtoDB.final_queries["node_matching"])}'
             elif isinstance(e, list): #new node
                 identifiers[i] = e[0]
             
@@ -370,5 +370,5 @@ if __name__ == "__main__":
     args = sys.argv
     if len(args) == 1: main()
     elif args[1] == 'test':
-        import test_.test_TCMtoNeo4j as test
+        import tests.test_tcm_to_neo4j as test
         test.validate_db_from_tcm()

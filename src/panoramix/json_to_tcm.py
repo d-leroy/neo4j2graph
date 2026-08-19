@@ -395,5 +395,5 @@ if __name__ == "__main__":
     args = sys.argv
     if len(args) == 1: main()
     elif args[1] == 'test':
-        import test_.test_jsonToTCM as test
+        import tests.test_json_to_tcm as test
         test.validate_tcm()

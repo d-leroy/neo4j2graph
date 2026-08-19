@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "arcane2graph"
+name = "panoramix"
 version = "0.1.0"
 description = "Convert Arcane XML/AXL configs to JSON and import into Neo4j graph database"
 readme = "README.md"
@@ -17,7 +17,14 @@ keywords = ["arcane", "neo4j", "xml", "json", "graph-database"]
 dependencies = [
     "xmltodict>=0.13.0",
     "neo4j>=5.0.0",
+    "numpy>=1.24.0",
 ]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/panoramix"]
+
+[tool.hatch.build]
+ignore-vcs = true
 
 [project.optional-dependencies]
 dev = [
@@ -27,7 +34,7 @@ dev = [
 ]
 
 [project.scripts]
-arcane2graph = "arcane2graph.merge:main"
+panoramix = "panoramix.cli:main"
 
 [tool.uv]
 dev-dependencies = [

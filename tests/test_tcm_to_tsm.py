@@ -1,5 +1,5 @@
-from TCMtoTSM import *
-from test_.test_graphs import *
+from panoramix.tcm_to_tsm import *
+from tests.test_graphs import *
 from itertools import combinations
 
 def test_structure(tsm):

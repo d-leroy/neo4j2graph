@@ -1,5 +1,5 @@
-from jsonToTCM import *
-from test_.test_graphs import *
+from panoramix.json_to_tcm import *
+from tests.test_graphs import *
 
 #################### TESTS ######################""
 

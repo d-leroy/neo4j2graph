@@ -1,4 +1,4 @@
-from jsonToTCM import *
+from panoramix.json_to_tcm import *
 
 def nodes_from_edges(edge_list):
     for edge in edge_list:

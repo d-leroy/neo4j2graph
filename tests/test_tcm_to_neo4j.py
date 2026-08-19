@@ -1,7 +1,7 @@
-from TCMtoNeo4j import *
-from TCMtoTSM import TSM, VNode, SNode, Edge
+from panoramix.tcm_to_neo4j import *
+from panoramix.tcm_to_tsm import TSM, VNode, SNode, Edge
 import os
-from Neo4jGraphFunctions import GraphFunctions as gf
+from panoramix.neo4j_graph_functions import GraphFunctions as gf
 import neo4j.graph as ng
 
 def to_identifiers(*lists):
@@ -21,7 +21,7 @@ def to_identifier(obj):
         if "ValueNode" in obj.labels:
             return obj['identifier']
         elif "SpecificationNode" in obj.labels:
-            return f"{obj["name"]}:{obj["type"]}"
+            return f'{obj["name"]}:{obj["type"]}'
     elif isinstance(obj, list):
         return [to_identifier(o) for o in obj]
 

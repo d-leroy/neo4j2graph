@@ -1,8 +1,8 @@
 import os
 import sys
 from neo4j import GraphDatabase
-from TCMtoTSM import TSM
-from jsonToTCM import TCM
+from panoramix.tcm_to_tsm import TSM
+from panoramix.json_to_tcm import TCM
 
 STARTING_CHAR = "a"
 
@@ -75,7 +75,7 @@ def main():
     #test_tsm = build_tsm(['Mahyco_0x5b67d7517e00.json'])
     string_for_neo4j = TSM_creation_query(test_tsm)
     
-    URI = "bolt://localhost:7687"
+    URI = "bolt://neo4j:7687"
     AUTH = ("neo4j", "password")
 
     with GraphDatabase.driver(URI, auth=AUTH) as driver:
@@ -90,7 +90,7 @@ def main_populate():
     test_tsm = build_tsm(TCM_files)
     string_for_neo4j = TSM_creation_query(test_tsm)
 
-    URI = "bolt://localhost:7687"
+    URI = "bolt://neo4j:7687"
     AUTH = ("neo4j", "password")
 
     with GraphDatabase.driver(URI, auth=AUTH) as driver:
@@ -104,11 +104,7 @@ if __name__ == "__main__":
     args = sys.argv
     if len(args) == 1: main()
     elif args[1] == 'test':
-        import test_.test_TSMtoNeo4j as test
-        if len(args) == 5:
-            db_URI, db_user, db_pw = args[2:5]
-            test.validate_db_from_TSM([db_URI, (db_user, db_pw)])
-        else:
-            test.validate_db_from_TSM()
+        import tests.test_tsm_to_neo4j as test
+        test.validate_db_from_TSM()
     elif args[1] == 'populate':
         main_populate()

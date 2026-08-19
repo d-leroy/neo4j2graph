@@ -1,4 +1,4 @@
-# arcane2graph
+# panoramix
 
 A set of utilities for running Arcane sequentially, converting its outputs, and loading results into a Neo4j graph database.
 
@@ -12,10 +12,10 @@ Use the following Arcane options when you need a non‑interactive/export run:
 
 ## Converting extracted XML configs to JSON
 ```
-python merge.py
+panoramix
 ```
 
-**Note:** The `merge.py` script now handles both XML-to-JSON conversion and database import in a single command. The script automatically:
+**Note:** The `panoramix` CLI now handles both XML-to-JSON conversion and database import in a single command. It automatically:
 1. Converts XML files from `./xml` to JSON in `./arc_json`
 2. Merges the JSON data into Neo4j
 3. Imports AXL export files into Neo4j
@@ -24,7 +24,7 @@ python merge.py
 The easiest way to get started is to install the published package from PyPI:
 
 ```bash
-pip install arcane2graph
+pip install panoramix
 ```
 
 Optionally create a virtual environment for development or isolation:
@@ -34,21 +34,21 @@ python -m venv .venv
 # activate the environment:
 source .venv/bin/activate        # macOS/Linux
 .\.venv\Scripts\activate      # Windows
-pip install arcane2graph         # or `pip install -e .` when working on the code
+pip install panoramix         # or `pip install -e .` when working on the code
 ```
 
-Once installed, the `arcane2graph` command is available on your PATH:
+Once installed, the `panoramix` command is available on your PATH:
 
 ```bash
-arcane2graph --help
-arcane2graph --xml-path ./xml --json-path ./arc_json --neo4j-password password
+panoramix --help
+panoramix --xml-path ./xml --json-path ./arc_json --neo4j-password password
 ```
 
 For a one‑off invocation without activating the env, call the binary directly:
 
 ```bash
-./.venv/bin/arcane2graph --xml-path ./xml          # Linux/macOS
-.\.venv\Scripts\arcane2graph --xml-path .\xml   # Windows
+./.venv/bin/panoramix --xml-path ./xml          # Linux/macOS
+.\.venv\Scripts\panoramix --xml-path .\xml   # Windows
 ```
 
 ---
@@ -65,16 +65,16 @@ docker run -d -p 7474:7474 -p 7687:7687 -v $PWD/data:/data:Z -v $PWD/plugins:/pl
 
 ## Populating the database
 
-Run **`merge.py`**; the script now performs all three steps in one execution:
+Run **`panoramix`**; the CLI performs all three steps in one execution:
 1. Convert XML files to JSON
 2. Merge the JSON data into Neo4j
 3. Import any AXL export files into Neo4j
 
-One run of the script is sufficient.
+One run is sufficient.
 
-### merge.py options
+### CLI options
 ```
-python merge.py [OPTIONS]
+panoramix [OPTIONS]
 
 Options:
   --xml-path PATH               Path to XML input directory (default: ./xml)
@@ -87,7 +87,7 @@ Options:
 
 ### Examples
 ```bash
-python merge.py --xml-path ./config/xml --json-path ./config/json --neo4j-uri bolt://localhost:7687 --neo4j-username neo4j --neo4j-password password
+panoramix --xml-path ./config/xml --json-path ./config/json --neo4j-uri bolt://localhost:7687 --neo4j-username neo4j --neo4j-password password
 ```
 
 ## Interface web

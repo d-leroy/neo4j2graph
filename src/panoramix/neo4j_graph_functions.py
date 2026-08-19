@@ -1,9 +1,9 @@
-from TCMtoTSM import TSM, VNode, SNode, Edge
-from jsonToTCM import *
+from panoramix.tcm_to_tsm import TSM, VNode, SNode, Edge
+from panoramix.json_to_tcm import *
 from pydoc import locate
-from TSMtoNeo4j import sanitize
+from panoramix.tsm_to_neo4j import sanitize
 from neo4j import GraphDatabase
-from MeanFunctions import *
+from panoramix.mean_functions import *
 
 class GraphFunctions:
 
@@ -301,7 +301,7 @@ if __name__ == "__main__":
     args = sys.argv
     if len(args) == 1: main()
     elif args[1] == 'test':
-        import test_.test_DbToTSM as test
+        import tests.test_db_to_tsm as test
         test.validate_db()
     elif args[1] == 'prevalence':
         URI = "bolt://localhost:7687"

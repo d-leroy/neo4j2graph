@@ -1,6 +1,6 @@
-from Neo4jGraphFunctions import GraphFunctions
+from panoramix.neo4j_graph_functions import GraphFunctions
 from neo4j import GraphDatabase
-from test_.test_TCMtoTSM import test_tsm
+from tests.test_tcm_to_tsm import test_tsm
 
 def validate_db(by_query = True):
     URI = "bolt://localhost:7687"
