@@ -248,7 +248,7 @@ RETURN node, {ret_spec_node}"""
     ################# query for testing db TSM validity ###############
 
     @staticmethod
-    def Db_Validity_query():
+    def _Db_Validity_query_body():
         return """OPTIONAL MATCH (n) WHERE NOT n:ValueNode AND NOT n:SpecificationNode AND NOT n:AnnotationNode AND NOT n:FileNode WITH collect(n) = [] AS n_types
 OPTIONAL MATCH (s:SpecificationNode) WHERE NOT (s)<-[:IS_SPECIFIED_BY]-(:ValueNode) AND NOT (s)<-[:ANNOTATES]-(:AnnotationNode) WITH s IS NULL AS value_for_spec, n_types
 OPTIONAL MATCH p = (f:FileNode)-[:ANNOTATES]->(n) WHERE NOT n:ValueNode OR (n:ValueNode)<-[:CONTAINS]-() WITH collect(p) = [] AS file_annotation, value_for_spec, n_types
@@ -266,7 +266,29 @@ OPTIONAL MATCH (msn:SpecificationNode)<-[:IS_SPECIFIED_BY]-(mvn:ValueNode)-[:CON
 MATCH (root:ValueNode) WHERE NOT (root)<-[:CONTAINS]-() WITH count(root) as nb_root, prop_5, type_spec, unique_s_parent, unique_spec, node_structure, node_alone, unique_root, duplicate, e_specifies, e_contains, option_annotation, file_annotation, value_for_spec, n_types
 MATCH (n:ValueNode) WITH count(n) AS nb_node, nb_root, prop_5, type_spec, unique_s_parent, unique_spec, node_structure, node_alone, unique_root, duplicate, e_specifies, e_contains, option_annotation, file_annotation, value_for_spec, n_types
 OPTIONAL MATCH (n)-[]->(m), cyclePath=shortestPath((m)-[*]->(n)) WITH cyclePath IS NULL as is_cycle, prop_5 = nb_node-nb_root AS spec_child_id_child_spec, type_spec, unique_s_parent, unique_spec, node_structure, node_alone, unique_root, duplicate, e_specifies, e_contains, option_annotation, file_annotation, value_for_spec, n_types
-return all(elmnt in [is_cycle, spec_child_id_child_spec, type_spec, unique_s_parent, unique_spec, node_structure, node_alone, unique_root, duplicate, e_specifies, e_contains, option_annotation, file_annotation, value_for_spec, n_types] WHERE elmnt = TRUE) as is_db_valid"""
+"""
+
+    @staticmethod
+    def Db_Validity_query():
+        return GraphFunctions._Db_Validity_query_body() + "return all(elmnt in [is_cycle, spec_child_id_child_spec, type_spec, unique_s_parent, unique_spec, node_structure, node_alone, unique_root, duplicate, e_specifies, e_contains, option_annotation, file_annotation, value_for_spec, n_types] WHERE elmnt = TRUE) as is_db_valid"
+
+    @staticmethod
+    def Db_Validity_details_query():
+        return GraphFunctions._Db_Validity_query_body() + "RETURN {n_types: n_types, value_for_spec: value_for_spec, file_annotation: file_annotation, option_annotation: option_annotation, e_contains: e_contains, e_specifies: e_specifies, duplicate: duplicate, unique_root: unique_root, node_alone: node_alone, node_structure: node_structure, unique_spec: unique_spec, unique_s_parent: unique_s_parent, type_spec: type_spec, spec_child_id_child_spec: spec_child_id_child_spec, is_cycle: is_cycle} AS checks"
+
+    @staticmethod
+    def Db_Validity_diagnostic_query():
+        return """MATCH (n) WHERE NOT n:ValueNode AND NOT n:SpecificationNode AND NOT n:AnnotationNode AND NOT n:FileNode
+WITH collect(DISTINCT labels(n)) AS bad_labels
+MATCH (s:SpecificationNode) WHERE NOT (s)<-[:CONTAINS]-()
+WITH collect(DISTINCT {name: s.name, type: s.type}) AS unparented_specs, bad_labels
+OPTIONAL MATCH (a:AnnotationNode) WHERE NOT a:FileNode
+WITH a, unparented_specs, bad_labels
+OPTIONAL MATCH (a)-[:ANNOTATES]->(n) WHERE NOT n:SpecificationNode
+WITH collect(DISTINCT {annotation: a.annotation, target_labels: labels(n), target_props: properties(n)}) AS bad_annotations, unparented_specs, bad_labels
+OPTIONAL MATCH (n1:ValueNode), (n2:ValueNode) WHERE n1<>n2 AND n1.identifier = n2.identifier AND n1.value = n2.value
+WITH collect(DISTINCT {identifier: n1.identifier, value: n1.value}) AS duplicates, bad_annotations, unparented_specs, bad_labels
+RETURN {bad_labels: bad_labels, unparented_specs: unparented_specs, bad_annotations: bad_annotations, duplicates: duplicates} AS diagnostics"""
 
 
 
