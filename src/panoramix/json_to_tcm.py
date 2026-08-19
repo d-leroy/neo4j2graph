@@ -110,11 +110,12 @@ class Edge:
 class TCM:
 
     def __init__(self, file_path, data_key = None):
+        self.file_path = file_path
         self.annotations = {"filenames": {}, "nonexistent_nodes": {}}
         self.nodes, self.edges = self.json_to_tcm(file_path, data_key)
         self.add_annotation("filenames", self.search_root(self.get_edges()).get_identifier(), file_path)
         self.process_nonexistent_nodes_annotation()
-    
+
 
     ################# Loading data from json file #################
 
@@ -125,7 +126,7 @@ class TCM:
             except Exception as e:
                 print(f"[ERROR] Failed to parse {file}: {e}")
         return self.nodify(data, data_key)
-    
+
     @staticmethod
     def find_real_data(data, key):
         if key is None: return data
@@ -136,7 +137,6 @@ class TCM:
                     ret = TCM.find_real_data(values, key)
                     if ret: return ret
 
-    
 
     ############ functions to transform data into Test Case Model ###########
 
@@ -150,13 +150,19 @@ class TCM:
         if sig is None: return [], []
         return nodes, edges
 
+    @staticmethod
+    def next_path(current_path, key):
+        if current_path is None or current_path == "":
+            return key
+        return f"{current_path}.{key}"
+
     def nodify_rec(self, data, mother_node, nodes, edges, current_path):
         data_type, generator = TCM.create_generator(data, mother_node)
         mother_node.set_type(list if data_type == "list" else dict)
 
         signature_items = []
         for i, (k, v) in enumerate(generator):
-            sig = self.process_node(k, v, mother_node, nodes, edges, f"{current_path}.{k}", i)
+            sig = self.process_node(k, v, mother_node, nodes, edges, self.next_path(current_path, k), i)
             if sig: signature_items.append(sig)
         
         if signature_items == []: return None
@@ -378,7 +384,7 @@ def main():
         if filename.endswith(".json"):
             file_path = os.path.join(json_path, filename)
             print(file_path)
-            test = TCM(file_path, 'mahyco')
+            test = TCM(file_path)
             processed_json.append(test)
             if len(processed_json) >= max_process:
                 break

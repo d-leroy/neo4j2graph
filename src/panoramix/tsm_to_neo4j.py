@@ -64,9 +64,9 @@ def build_tsm(files):
     for filename in files:
         file_path = os.path.join(json_path, filename)
         print(file_path)
-        test = TCM(file_path, 'mahyco')
+        test = TCM(file_path)
         processed_json.append(test)
-    
+
     return TSM(processed_json)
 
 def main():

@@ -340,7 +340,7 @@ def main():
     for filename in files_to_consider:
         file_path = os.path.join(json_path, filename)
         print(file_path)
-        processed_json.append(TCM(file_path, 'mahyco'))
+        processed_json.append(TCM(file_path))
     
 
     with GraphDatabase.driver(URI, auth=AUTH) as driver:

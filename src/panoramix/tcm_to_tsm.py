@@ -255,7 +255,7 @@ def main():
     for filename in jsons_to_process:
         file_path = os.path.join(json_path, filename)
         print(file_path)
-        test = TCM(file_path, 'mahyco')
+        test = TCM(file_path)
         processed_json.append(test)
     
     test_tsm = TSM(processed_json)

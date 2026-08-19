@@ -80,7 +80,7 @@ def validate_tcm():
         if filename.endswith(".json"):
             file_path = os.path.join(json_path, filename)
             print(file_path)
-            tcm = TCM(file_path, 'mahyco')
+            tcm = TCM(file_path)
             test_tcm(tcm)
     print("ALL tests have been validated")
     
