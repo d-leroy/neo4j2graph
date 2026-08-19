@@ -151,7 +151,7 @@ def TSM_creation_query_batch(v_nodes, s_nodes, c_edges, s_edges, annotations, ts
     return query.rstrip()
 
 
-def build_tsm(files, json_path):
+def build_tsm(files, json_path, data_key=None):
     processed_json = []
     skipped_files = []
 
@@ -160,7 +160,7 @@ def build_tsm(files, json_path):
         file_path = os.path.join(json_path, filename)
         logger.info("Parsing %s", file_path)
         try:
-            tcm = TCM(file_path)
+            tcm = TCM(file_path, data_key)
             processed_json.append(tcm)
             logger.debug("Parsed TCM from %s", filename)
         except Exception as exc:
@@ -195,7 +195,7 @@ def _confirm_delete():
     logger.info("\"%s\" != \"DELETE\" — abort.", cleaned)
     return False
 
-def populate_neo4j(files, json_path, neo4j_uri, neo4j_user, neo4j_password, delete=False):
+def populate_neo4j(files, json_path, neo4j_uri, neo4j_user, neo4j_password, delete=False, data_key=None):
     if delete and not _confirm_delete():
         logger.info("Delete cancelled. Exiting without making changes.")
         return []
@@ -210,7 +210,7 @@ def populate_neo4j(files, json_path, neo4j_uri, neo4j_user, neo4j_password, dele
         file_path = os.path.join(json_path, filename)
         logger.info("Parsing %s", file_path)
         try:
-            tcm = TCM(file_path)
+            tcm = TCM(file_path, data_key)
             processed_json.append(tcm)
             logger.debug("Parsed TCM from %s", filename)
         except Exception as exc:
@@ -307,15 +307,16 @@ def main():
     parser.add_argument("--neo4j-password", default="password", help="Neo4j password (default: password)")
     parser.add_argument("--populate", action="store_true", help="Import all JSON files in the directory")
     parser.add_argument("--delete", action="store_true", help="Delete all existing database content before import (requires interactive confirmation)")
+    parser.add_argument("--data-key", default=None, help="Key to locate the real payload within the JSON structure (default: None, uses the whole file)")
     parser.add_argument("files", nargs="*", help="Specific JSON filenames to import (requires --json-path)")
 
     args = parser.parse_args()
 
     if args.populate:
         files = [filename for filename in os.listdir(args.json_path) if filename.endswith(".json")]
-        populate_neo4j(files, args.json_path, args.neo4j_uri, args.neo4j_user, args.neo4j_password, delete=args.delete)
+        populate_neo4j(files, args.json_path, args.neo4j_uri, args.neo4j_user, args.neo4j_password, delete=args.delete, data_key=args.data_key)
     elif args.files:
-        populate_neo4j(args.files, args.json_path, args.neo4j_uri, args.neo4j_user, args.neo4j_password, delete=args.delete)
+        populate_neo4j(args.files, args.json_path, args.neo4j_uri, args.neo4j_user, args.neo4j_password, delete=args.delete, data_key=args.data_key)
     else:
         parser.print_help()
 
