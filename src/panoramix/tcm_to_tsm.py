@@ -1,6 +1,9 @@
+import logging
 import os
 import sys
 from panoramix.json_to_tcm import TCM, Edge, TYPES, NODE_COMPOSITE_TYPES
+
+logger = logging.getLogger(__name__)
 
 class SNode:
     def __init__(self, name, stype):
@@ -151,14 +154,20 @@ class TSM:
         #print(self.get_annotations())
 
     def process_option_value(self, current_node, tcm_nodes, tcm_edges):
+        logger.debug(
+            "[process_option_value] name='%s' val=%r hash=%s",
+            current_node.name(), current_node.val(), current_node.get_identifier()
+        )
+
         v_nodes = self.get_value_nodes()
         for v_node in v_nodes:
-            if v_node.get_identifier() == current_node.get_identifier(): return v_node
-                # in theory we could process the type of the current_node to update its specification, but if current_node has a value consistent
-                # with the nodes already in the tsm, no need to update the type for now
+            if v_node.get_identifier() == current_node.get_identifier():
+                logger.debug("  -> VNode already in TSM (reuse)")
+                return v_node
 
         new_v_node = TSM.create_v_node(*current_node.get_v_node_creation_info())
         self.add_value_node(new_v_node)
+        logger.debug("  -> created new VNode %s", new_v_node)
 
         tsm_mother_v_node, tsm_mother_s_node, tsm_s_node= None, None, None
         tcm_mother_node = TCM.find_node_from_edge(tcm_edges, current_node, from_source = False)
@@ -167,6 +176,7 @@ class TSM:
         if tsm_mother_s_node is not None: tsm_s_node = TCM.find_node(self.get_containment_specification_edges(), lambda edge : edge.source() == tsm_mother_s_node and edge.target().name() == current_node.name(), lambda edge : edge.target())
         
         if tsm_s_node is not None:
+            logger.debug("  -> found existing spec '%s' stype=%s (from previous file)", tsm_s_node.name(), tsm_s_node.stype())
             tsm_new_v_type = type(new_v_node.val())
             if tsm_new_v_type is type(None) and tsm_s_node.stype() not in NODE_COMPOSITE_TYPES:
                 raise TypeError(
@@ -181,15 +191,20 @@ class TSM:
                 new_s_node = TCM.search_root(self.get_containment_edges())
                 if new_s_node is None:
                     new_s_node = TSM.create_s_node(*current_node.get_s_node_creation_info())
+                    logger.debug("  -> created ROOT spec '%s' stype=%s", new_s_node.name(), new_s_node.stype())
                     self.add_specification_node(new_s_node)
+                else:
+                    logger.debug("  -> using existing ROOT spec '%s'", new_s_node.name())
             else:
                 new_s_node = TSM.create_s_node(*current_node.get_s_node_creation_info())
+                logger.debug("  -> created new spec '%s' stype=%s", new_s_node.name(), new_s_node.stype())
                 self.add_specification_node(new_s_node, new_v_node.get_identifier(), tsm_mother_v_node.get_identifier())
                 self.add_containment_edge(tsm_mother_s_node, new_s_node)
 
             self.add_specification_edge(new_v_node, new_s_node)
-        
+
         edges_from_new_v_node = TCM.find_edges(tcm_edges, from_node=current_node)
+        logger.debug("  -> %d child edge(s) to process", len(edges_from_new_v_node))
         for current_node_edge in edges_from_new_v_node:
             tsm_v_node_child = self.process_option_value(current_node_edge.target(), tcm_nodes, tcm_edges)
             self.add_containment_edge(new_v_node, tsm_v_node_child, current_node_edge.get_index())

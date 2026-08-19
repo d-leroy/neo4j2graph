@@ -1,8 +1,18 @@
+import logging
 import os
 import sys
 import json
 import hashlib
 from numpy import format_float_scientific
+
+logger = logging.getLogger(__name__)
+
+_LOG_LEVEL = os.environ.get("PANORAMIX_LOG_LEVEL", "").upper()
+if _LOG_LEVEL:
+    logging.basicConfig(
+        level=getattr(logging, _LOG_LEVEL, logging.INFO),
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    )
 
 NODE_SIMPLE_TYPES = (str, int, float, bool)
 NODE_COMPOSITE_TYPES = (list, dict)
@@ -179,6 +189,7 @@ class TCM:
             new_node = self.create_node(k, casted_value, current_path)
             signature = (k, ("scalar", TCM.cast_for_signature(casted_value)))
             new_node.set_signature(signature[1])
+            logger.debug("[leaf] path=%s raw=%r casted=%r", current_path, v, casted_value)
         elif v is not None:
             new_node = self.create_node(k, None, current_path)
             signature = self.nodify_rec(v, new_node, nodes, edges, current_path)

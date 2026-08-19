@@ -1,9 +1,12 @@
 import argparse
+import logging
 import os
 import sys
 from neo4j import GraphDatabase
 from panoramix.tcm_to_tsm import TSM
 from panoramix.json_to_tcm import TCM
+
+logger = logging.getLogger(__name__)
 
 STARTING_CHAR = "a"
 
@@ -66,11 +69,13 @@ def build_tsm(files, json_path):
     # Phase 1: parse all files into TCMs
     for filename in files:
         file_path = os.path.join(json_path, filename)
-        print(file_path)
+        logger.info("Parsing %s", file_path)
         try:
             tcm = TCM(file_path)
             processed_json.append(tcm)
+            logger.debug("Parsed TCM from %s", filename)
         except Exception as exc:
+            logger.error("SKIPPED %s: %s", filename, exc)
             skipped_files.append((filename, str(exc)))
 
     if not processed_json:
@@ -98,15 +103,16 @@ def _confirm_delete():
     cleaned = prompt.replace("\r", "").strip()
     if cleaned == "DELETE":
         return True
-    print(f"\"{cleaned}\" != \"DELETE\" — abort.", flush=True)
+    logger.info("\"%s\" != \"DELETE\" — abort.", cleaned)
     return False
 
 def populate_neo4j(files, json_path, neo4j_uri, neo4j_user, neo4j_password, delete=False):
     if delete and not _confirm_delete():
-        print("Delete cancelled. Exiting without making changes.", flush=True)
+        logger.info("Delete cancelled. Exiting without making changes.")
         return []
 
-    print("Parsing JSON files...", flush=True)
+    logger.info("Parsing JSON files...")
+    logger.info("Parsing %d JSON file(s) from %s", len(files), json_path)
     tsm, skipped = build_tsm(files, json_path=json_path)
     string_for_neo4j = TSM_creation_query(tsm)
 
@@ -117,23 +123,21 @@ def populate_neo4j(files, json_path, neo4j_uri, neo4j_user, neo4j_password, dele
         if delete:
             with driver.session() as session:
                 session.run("MATCH (p) DETACH DELETE p").consume()
-            print("deleted previous db", flush=True)
+            logger.info("Deleted all existing nodes from database")
         else:
-            print("--delete not set; keeping existing database", flush=True)
+            logger.info("Keeping existing database (--delete not set)")
 
         with driver.session() as session:
             session.run(string_for_neo4j).consume()
-        print("Cypher import finished", flush=True)
+        logger.info("Cypher import finished")
     finally:
         driver.close()
-        print("Neo4j driver closed", flush=True)
+        logger.info("Neo4j driver closed")
 
     if skipped:
-        print("\n" + "=" * 60)
-        print(f"SKIPPED {len(skipped)} file(s):")
+        logger.warning("SKIPPED %d file(s):", len(skipped))
         for filename, reason in skipped:
-            print(f"  - {filename}: {reason}")
-        print("=" * 60)
+            logger.warning("  - %s: %s", filename, reason)
 
     return skipped
 
