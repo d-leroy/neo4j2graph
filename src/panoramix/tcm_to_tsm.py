@@ -167,6 +167,13 @@ class TSM:
         if tsm_mother_s_node is not None: tsm_s_node = TCM.find_node(self.get_containment_specification_edges(), lambda edge : edge.source() == tsm_mother_s_node and edge.target().name() == current_node.name(), lambda edge : edge.target())
         
         if tsm_s_node is not None:
+            tsm_new_v_type = type(new_v_node.val())
+            if tsm_new_v_type is type(None) and tsm_s_node.stype() not in NODE_COMPOSITE_TYPES:
+                raise TypeError(
+                    f"Scalar-to-composite upgrade not supported: "
+                    f"spec '{tsm_s_node.name()}' has type {tsm_s_node.stype().__name__}, "
+                    f"but current node is composite."
+                )
             self.process_type(new_v_node, tsm_s_node)
             self.add_specification_edge(new_v_node, tsm_s_node)
         else:
