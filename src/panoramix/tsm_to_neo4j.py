@@ -1,3 +1,4 @@
+import argparse
 import os
 import sys
 from neo4j import GraphDatabase
@@ -58,53 +59,103 @@ def TSM_creation_query(tsm):
     return query[:-1]
 
 
-def build_tsm(files):
-    json_path = "arc_json"
+def build_tsm(files, json_path):
     processed_json = []
+    skipped_files = []
+
+    # Phase 1: parse all files into TCMs
     for filename in files:
         file_path = os.path.join(json_path, filename)
         print(file_path)
-        test = TCM(file_path)
-        processed_json.append(test)
+        try:
+            tcm = TCM(file_path)
+            processed_json.append(tcm)
+        except Exception as exc:
+            skipped_files.append((filename, str(exc)))
 
-    return TSM(processed_json)
+    if not processed_json:
+        raise ValueError("No files were successfully parsed.")
+
+    # Phase 2: build TSM incrementally, file by file
+    tsm = TSM([])  # start empty
+    for tcm in processed_json:
+        try:
+            tsm.expand_tsm(tcm)
+        except (TypeError, ValueError, KeyError) as exc:
+            logger.error(
+                "TSM rejected file %s: %s",
+                os.path.basename(tcm.file_path), exc
+            )
+            skipped_files.append((os.path.basename(tcm.file_path), str(exc)))
+
+    return tsm, skipped_files
+
+def _confirm_delete():
+    prompt = input(
+        "WARNING: This will DELETE ALL DATA in the Neo4j database.\n"
+        "Type DELETE to confirm, or anything else to abort: "
+    )
+    cleaned = prompt.replace("\r", "").strip()
+    if cleaned == "DELETE":
+        return True
+    print(f"\"{cleaned}\" != \"DELETE\" — abort.", flush=True)
+    return False
+
+def populate_neo4j(files, json_path, neo4j_uri, neo4j_user, neo4j_password, delete=False):
+    if delete and not _confirm_delete():
+        print("Delete cancelled. Exiting without making changes.", flush=True)
+        return []
+
+    print("Parsing JSON files...", flush=True)
+    tsm, skipped = build_tsm(files, json_path=json_path)
+    string_for_neo4j = TSM_creation_query(tsm)
+
+    driver = GraphDatabase.driver(neo4j_uri, auth=(neo4j_user, neo4j_password))
+    try:
+        driver.verify_connectivity()
+
+        if delete:
+            with driver.session() as session:
+                session.run("MATCH (p) DETACH DELETE p").consume()
+            print("deleted previous db", flush=True)
+        else:
+            print("--delete not set; keeping existing database", flush=True)
+
+        with driver.session() as session:
+            session.run(string_for_neo4j).consume()
+        print("Cypher import finished", flush=True)
+    finally:
+        driver.close()
+        print("Neo4j driver closed", flush=True)
+
+    if skipped:
+        print("\n" + "=" * 60)
+        print(f"SKIPPED {len(skipped)} file(s):")
+        for filename, reason in skipped:
+            print(f"  - {filename}: {reason}")
+        print("=" * 60)
+
+    return skipped
 
 def main():
-    test_tsm = build_tsm(['Mahyco_0x5b67d7517e00.json', 'Mahyco_0x5aa3a2f6d0f0.json', 'Mahyco_0x5be0ee5cb7b0.json'])
-    #test_tsm = build_tsm(['Mahyco_0x5be0ee5cb7b0.json'])
-    #test_tsm = build_tsm(['Mahyco_0x5b67d7517e00.json'])
-    string_for_neo4j = TSM_creation_query(test_tsm)
-    
-    URI = "bolt://neo4j:7687"
-    AUTH = ("neo4j", "password")
+    parser = argparse.ArgumentParser(description="Build TSM from JSON and import into Neo4j")
+    parser.add_argument("--json-path", required=True, help="Directory containing JSON files")
+    parser.add_argument("--neo4j-uri", default="bolt://neo4j:7687", help="Neo4j connection URI (default: bolt://neo4j:7687)")
+    parser.add_argument("--neo4j-user", default="neo4j", help="Neo4j username (default: neo4j)")
+    parser.add_argument("--neo4j-password", default="password", help="Neo4j password (default: password)")
+    parser.add_argument("--populate", action="store_true", help="Import all JSON files in the directory")
+    parser.add_argument("--delete", action="store_true", help="Delete all existing database content before import (requires interactive confirmation)")
+    parser.add_argument("files", nargs="*", help="Specific JSON filenames to import (requires --json-path)")
 
-    with GraphDatabase.driver(URI, auth=AUTH) as driver:
-        driver.verify_connectivity()
-        driver.execute_query("MATCH (p)\nDETACH DELETE p")# remove current graph
-        print("deleted previous db")
-        driver.execute_query(string_for_neo4j)# build graph here
+    args = parser.parse_args()
 
-def main_populate():
-    json_path = 'arc_json'
-    TCM_files = [filename for filename in os.listdir(json_path) if filename.endswith(".json")]
-    test_tsm = build_tsm(TCM_files)
-    string_for_neo4j = TSM_creation_query(test_tsm)
-
-    URI = "bolt://neo4j:7687"
-    AUTH = ("neo4j", "password")
-
-    with GraphDatabase.driver(URI, auth=AUTH) as driver:
-        driver.verify_connectivity()
-        driver.execute_query("MATCH (p)\nDETACH DELETE p") # remove current graph
-        print("deleted previous db")
-        driver.execute_query(string_for_neo4j) # build graph here
-        
+    if args.populate:
+        files = [filename for filename in os.listdir(args.json_path) if filename.endswith(".json")]
+        populate_neo4j(files, args.json_path, args.neo4j_uri, args.neo4j_user, args.neo4j_password, delete=args.delete)
+    elif args.files:
+        populate_neo4j(args.files, args.json_path, args.neo4j_uri, args.neo4j_user, args.neo4j_password, delete=args.delete)
+    else:
+        parser.print_help()
 
 if __name__ == "__main__":
-    args = sys.argv
-    if len(args) == 1: main()
-    elif args[1] == 'test':
-        import tests.test_tsm_to_neo4j as test
-        test.validate_db_from_TSM()
-    elif args[1] == 'populate':
-        main_populate()
+    main()
