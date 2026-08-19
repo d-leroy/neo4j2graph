@@ -105,7 +105,9 @@ RETURN _1n, rel, _2n"""
     
     @staticmethod
     def TSM_Slicing(session, nodes_to_find_on_single_root, return_all_subgraphs = False):
-        return session.run(*GraphFunctions.stringify_ids(nodes_to_find_on_single_root), return_all_subgraphs)
+        str_property_ids, str_element_ids = GraphFunctions.stringify_ids(nodes_to_find_on_single_root)
+        query = GraphFunctions.TSM_Slicing_base_query(str_element_ids, str_property_ids, return_all_subgraphs)
+        return session.run(query)
 
     @staticmethod
     def TSM_Slicing_base_query(str_leaf_element_ids, str_leaf_property_ids, return_all_subgraphs):
